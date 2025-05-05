@@ -6,11 +6,21 @@ should be implemented, lifting is mostly implemented.
 ![Lifted](https://github.com/fluxchief/binaryninja_avr/blob/master/img/lifted.png "Lifted")
 
 ## Installation
-Run this command in your BN plugins folder:
-`git clone https://github.com/m1stadev/binaryninja_avr.git`
+Use the [plugin manager](https://docs.binary.ninja/guide/plugins.html). 
 
-Another option is to download this repository as a ZIP file and
-extract it in your BN plugins folder.
+Alternatively, run this command in your BN plugins folder or download the repo into your plugin folder:
+`git clone https://github.com/fluxchief/binaryninja_avr.git`
+
+## Usage
+
+Opening an AVR file is a bit different from other architectures in Binary Ninja due to the need to support specific chips.
+
+You'll want to always use the "Open With Options" menu and select "AVR" from the "View Type" drop-down at the top.
+
+Next, search for "AVR" in the settings and select the appropriate chip from the drop-down.
+
+<!-- This URL will be broken until the PR is merged but it makes it work in the plugin manager so I think it's worth it.-->
+![Open With Options](https://github.com/fluxchief/binaryninja_avr/blob/master/img/avr-open.png "Open With Options")
 
 ## How is it different than [binja_avr](https://github.com/cah011/binja-avr)?
 1) This project aims for a better support of different chips. It currently has
