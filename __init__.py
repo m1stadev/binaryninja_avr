@@ -425,11 +425,15 @@ class AVRBinaryView(BinaryView):
 
     @classmethod
     def is_valid_for_data(self, data):
+        return False
+
+    @classmethod
+    def is_force_loadable(self):
         return True
 
     @classmethod
     def get_load_settings_for_data(cls, data):
-        load_settings = binaryninja.Settings("avr")
+        load_settings = Settings("avr")
 
         load_settings.register_group("avr", "AVR")
         load_settings.register_setting("avr.chip","""
@@ -451,9 +455,10 @@ class AVRBinaryView(BinaryView):
 
 
 AVR.register()
-arch = binaryninja.Architecture[AVR.name]
+arch = Architecture[AVR.name]
 arch.register_calling_convention(DefaultCallingConvention(arch, 'default'))
 
 arch.standalone_platform.default_calling_convention = arch.calling_conventions['default']
 AVRBinaryView.register()
+BinaryViewType['ELF'].register_arch(83, Endianness.LittleEndian, arch)
 
