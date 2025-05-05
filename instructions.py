@@ -5,21 +5,9 @@ import struct
 from . import operand
 from .operand import RAM_SEGMENT_BEGIN
 
-try:
-    import binaryninja
-    from binaryninja.log import log
-    from binaryninja.enums import LogLevel
-    from binaryninja import InstructionTextToken, InstructionTextTokenType
-except Exception:
-    class LogLevel:
-        AlertLog = 'ALERT'
-        DebugLog = 'DEBUG'
-        ErrorLog = 'ERROR'
-        InfoLog = 'INFO'
-        WarningLog = 'WARNING'
-
-    def log(level, text):
-        print("[{}]: {}".format(level, text))
+from binaryninja.log import log_debug
+from binaryninja.enums import LogLevel
+from binaryninja import (InstructionTextToken, InstructionTextTokenType, LowLevelILLabel, Architecture)
 
 
 class Instruction(metaclass=ABCMeta):
@@ -493,12 +481,12 @@ class Instruction_BR_Abstract(Instruction):
         elif abs_addr < 0:
             abs_addr += self._chip.ROM_SIZE
 
-        f = binaryninja.LowLevelILLabel()
-        label = il.get_label_for_address(binaryninja.Architecture['AVR'], abs_addr)
+        f = LowLevelILLabel()
+        label = il.get_label_for_address(Architecture['AVR'], abs_addr)
         if label is not None:
             t = label
         else:
-            t = binaryninja.LowLevelILLabel()
+            t = LowLevelILLabel()
 
         il.append(
             il.if_expr(
@@ -1021,7 +1009,7 @@ class Instruction_CPSE(Instruction):
             # We only got this instruction, cannot determine length of next ins.
             # Assume next instruction has two bytes
             next_len = 2
-            binaryninja.log.log_warn(
+            log_debug(
                 "0x{:X}: Lifting: CPSE: We only got 2 bytes but we need more to predict the length of the next instruction".format(self._addr))
         else:
             next_ins = parse_instruction(self._chip, self._addr, self._data[2:])
@@ -1029,15 +1017,15 @@ class Instruction_CPSE(Instruction):
                 next_len = next_ins.length()
             else:
                 next_len = 2
-                binaryninja.log.log_warn(
+                log_debug(
                     "0x{:X}: Lifting: CPSE: Next instruction invalid?".format(self._addr))
 
-        f = binaryninja.LowLevelILLabel()
-        label = il.get_label_for_address(binaryninja.Architecture['AVR'], self._addr + 2 + next_len)
+        f = LowLevelILLabel()
+        label = il.get_label_for_address(Architecture['AVR'], self._addr + 2 + next_len)
         if label is not None:
             t = label
         else:
-            t = binaryninja.LowLevelILLabel()
+            t = LowLevelILLabel()
         il.append(
             il.if_expr(
                 il.compare_equal(
@@ -1366,7 +1354,7 @@ class Instruction_JMP(Instruction):
 
     def get_llil(self, il):
         addr = self._operands[0].immediate_value
-        label = il.get_label_for_address(binaryninja.Architecture['AVR'], addr)
+        label = il.get_label_for_address(Architecture['AVR'], addr)
         if label:
             il.append(il.goto(label))
         else:
@@ -2825,7 +2813,7 @@ class Instruction_RJMP(Instruction):
         if taddr >= self._chip.ROM_SIZE:
             taddr -= self._chip.ROM_SIZE
 
-        label = il.get_label_for_address(binaryninja.Architecture['AVR'], taddr)
+        label = il.get_label_for_address(Architecture['AVR'], taddr)
         if label:
             il.append(il.goto(label))
         else:
@@ -2995,7 +2983,7 @@ class Instruction_SkipInstruction_Abstract(Instruction):
             # We only got this instruction, cannot determine length of next ins.
             # Assume next instruction has two bytes
             next_len = 2
-            binaryninja.log.log_warn(
+            log_debug(
                 "0x{:X}: Lifting: SB**: We only got 2 bytes but we need more to predict the length of the next instruction".format(self._addr))
         else:
             next_ins = parse_instruction(self._chip, self._addr, self._data[2:])
@@ -3003,15 +2991,15 @@ class Instruction_SkipInstruction_Abstract(Instruction):
                 next_len = next_ins.length()
             else:
                 next_len = 2
-                binaryninja.log.log_warn(
+                log_debug(
                     "0x{:X}: Lifting: SB**: Next instruction invalid?".format(self._addr))
 
-        f = binaryninja.LowLevelILLabel()
-        label = il.get_label_for_address(binaryninja.Architecture['AVR'], self._addr + 2 + next_len)
+        f = LowLevelILLabel()
+        label = il.get_label_for_address(Architecture['AVR'], self._addr + 2 + next_len)
         if label is not None:
             t = label
         else:
-            t = binaryninja.LowLevelILLabel()
+            t = LowLevelILLabel()
 
         il.append(
             il.if_expr(

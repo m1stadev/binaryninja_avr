@@ -12,14 +12,19 @@ from .instructions import RAM_SEGMENT_BEGIN
 from .chips import ALL_CHIPS
 
 
-import binaryninja
 from binaryninja import (
     BranchType, SegmentFlag, SectionSemantics, SymbolType,
-    LowLevelILFlagCondition, FlagRole
+    LowLevelILFlagCondition, FlagRole, BinaryViewType,
+    Architecture, RegisterInfo, InstructionInfo,
+    InstructionTextToken, InstructionTextTokenType,
+    CallingConvention, BinaryView, Settings
 )
+from binaryninja.enums import Endianness
+from binaryninja.log import log_debug, log_warn, log_error
+from binaryninja.types import Symbol
 
 
-class AVR(binaryninja.Architecture):
+class AVR(Architecture):
     name = 'AVR'
     address_size = 3
     default_int_size = 1
@@ -33,46 +38,46 @@ class AVR(binaryninja.Architecture):
     chip = None
 
     regs = {
-        'r0': binaryninja.RegisterInfo('r0', 1),
-        'r1': binaryninja.RegisterInfo('r1', 1),
-        'r2': binaryninja.RegisterInfo('r2', 1),
-        'r3': binaryninja.RegisterInfo('r3', 1),
-        'r4': binaryninja.RegisterInfo('r4', 1),
-        'r5': binaryninja.RegisterInfo('r5', 1),
-        'r6': binaryninja.RegisterInfo('r6', 1),
-        'r7': binaryninja.RegisterInfo('r7', 1),
-        'r8': binaryninja.RegisterInfo('r8', 1),
-        'r9': binaryninja.RegisterInfo('r9', 1),
-        'r10': binaryninja.RegisterInfo('r10', 1),
-        'r11': binaryninja.RegisterInfo('r11', 1),
-        'r12': binaryninja.RegisterInfo('r12', 1),
-        'r13': binaryninja.RegisterInfo('r13', 1),
-        'r14': binaryninja.RegisterInfo('r14', 1),
-        'r15': binaryninja.RegisterInfo('r15', 1),
-        'r16': binaryninja.RegisterInfo('r16', 1),
-        'r17': binaryninja.RegisterInfo('r17', 1),
-        'r18': binaryninja.RegisterInfo('r18', 1),
-        'r19': binaryninja.RegisterInfo('r19', 1),
-        'r20': binaryninja.RegisterInfo('r20', 1),
-        'r21': binaryninja.RegisterInfo('r21', 1),
-        'r22': binaryninja.RegisterInfo('r22', 1),
-        'r23': binaryninja.RegisterInfo('r23', 1),
-        'r24': binaryninja.RegisterInfo('r24', 1),
-        'r25': binaryninja.RegisterInfo('r25', 1),
+        'r0': RegisterInfo('r0', 1),
+        'r1': RegisterInfo('r1', 1),
+        'r2': RegisterInfo('r2', 1),
+        'r3': RegisterInfo('r3', 1),
+        'r4': RegisterInfo('r4', 1),
+        'r5': RegisterInfo('r5', 1),
+        'r6': RegisterInfo('r6', 1),
+        'r7': RegisterInfo('r7', 1),
+        'r8': RegisterInfo('r8', 1),
+        'r9': RegisterInfo('r9', 1),
+        'r10': RegisterInfo('r10', 1),
+        'r11': RegisterInfo('r11', 1),
+        'r12': RegisterInfo('r12', 1),
+        'r13': RegisterInfo('r13', 1),
+        'r14': RegisterInfo('r14', 1),
+        'r15': RegisterInfo('r15', 1),
+        'r16': RegisterInfo('r16', 1),
+        'r17': RegisterInfo('r17', 1),
+        'r18': RegisterInfo('r18', 1),
+        'r19': RegisterInfo('r19', 1),
+        'r20': RegisterInfo('r20', 1),
+        'r21': RegisterInfo('r21', 1),
+        'r22': RegisterInfo('r22', 1),
+        'r23': RegisterInfo('r23', 1),
+        'r24': RegisterInfo('r24', 1),
+        'r25': RegisterInfo('r25', 1),
 
-        'X': binaryninja.RegisterInfo('X', 2),
-        'r26': binaryninja.RegisterInfo('X', 1, 0),
-        'r27': binaryninja.RegisterInfo('X', 1, 1),
+        'X': RegisterInfo('X', 2),
+        'r26': RegisterInfo('X', 1, 0),
+        'r27': RegisterInfo('X', 1, 1),
 
-        'Y': binaryninja.RegisterInfo('Y', 2),
-        'r28': binaryninja.RegisterInfo('Y', 1, 0),
-        'r29': binaryninja.RegisterInfo('Y', 1, 1),
+        'Y': RegisterInfo('Y', 2),
+        'r28': RegisterInfo('Y', 1, 0),
+        'r29': RegisterInfo('Y', 1, 1),
 
-        'Z': binaryninja.RegisterInfo('Z', 2),
-        'r30': binaryninja.RegisterInfo('Z', 1, 0),
-        'r31': binaryninja.RegisterInfo('Z', 1, 1),
+        'Z': RegisterInfo('Z', 2),
+        'r30': RegisterInfo('Z', 1, 0),
+        'r31': RegisterInfo('Z', 1, 1),
 
-        'SP': binaryninja.RegisterInfo('SP', 2),
+        'SP': RegisterInfo('SP', 2),
     }
 
     # Kept as '0' most of the times
@@ -133,14 +138,14 @@ class AVR(binaryninja.Architecture):
         return isinstance(ins, instructions.Instruction_BR_Abstract)
 
     def get_instruction_info(self, data, addr):
-        nfo = binaryninja.InstructionInfo()
+        nfo = InstructionInfo()
         ins = self._get_instruction(data, addr)
         if not ins:
             # Failsafe: Assume 2 bytes if we couldn't decode the instruction.
             # This should only happen if this is indeed an incorrect instruction
             # but for some reason BN tries to disassemble random data sometimes
             # and will show warnings if nfo.length == 0.
-            binaryninja.log.log_warn(
+            log_debug(
                 "Could not parse instruction @ 0x{:X}".format(
                     addr
                 )
@@ -176,7 +181,7 @@ class AVR(binaryninja.Architecture):
                 next_ins_len = self._get_instruction(data[2:], addr + 2).length()
             else:
                 next_ins_len = 2
-                binaryninja.log.log_warn(
+                log_debug(
                     "0x{:X}: get_instruction_info: We only got 2 bytes but we need more to predict the length of the next instruction".format(addr))
 
             nfo.add_branch(
@@ -238,8 +243,8 @@ class AVR(binaryninja.Architecture):
         ins = self._get_instruction(data, addr)
         if not ins:
             return [
-                binaryninja.InstructionTextToken(
-                    binaryninja.InstructionTextTokenType.InstructionToken,
+                InstructionTextToken(
+                    InstructionTextTokenType.InstructionToken,
                     "Unsupported ({})".format(
                         binascii.hexlify(data)
                     )
@@ -254,7 +259,7 @@ class AVR(binaryninja.Architecture):
             ins.get_llil(il)
             return ins.length()
         else:
-            binaryninja.log_warn(
+            log_debug(
                 "Could not parse instruction @ 0x{:08X}".format(
                     addr
                 )
@@ -289,19 +294,19 @@ class AVR(binaryninja.Architecture):
     """
 
 
-class DefaultCallingConvention(binaryninja.CallingConvention):
+class DefaultCallingConvention(CallingConvention):
     name = 'default'
     int_arg_regs = ['r22', 'r23', 'r24', 'r25']
     int_return_reg = 'r30'
     high_int_return_reg = 'r31'
 
 
-class AVRBinaryView(binaryninja.BinaryView):
+class AVRBinaryView(BinaryView):
     name = 'AVR'
     long_name = 'Atmel AVR'
 
     def __init__(self, data):
-        binaryninja.BinaryView.__init__(self, file_metadata=data.file, parent_view=data)
+        BinaryView.__init__(self, file_metadata=data.file, parent_view=data)
         self.raw = data
 
     def __undefine_symbol_if_defined(self, addr):
@@ -318,7 +323,7 @@ class AVRBinaryView(binaryninja.BinaryView):
         chip = [c for c in ALL_CHIPS if chip_id == c.identifier()]
 
         if len(chip) != 1:
-            binaryninja.log.log_error("AVR: No chip selected")
+            log_error("AVR: No chip selected")
             return False
         chip = chip[0]
 
@@ -328,11 +333,11 @@ class AVRBinaryView(binaryninja.BinaryView):
         AVR.chip = chip()
 
         if self.raw.length > AVR.chip.ROM_SIZE:
-            binaryninja.log.log_error("AVR: Rom too big for this chip")
+            log_error("AVR: Rom too big for this chip")
             return False
 
-        self.platform = binaryninja.Architecture[AVR.name].standalone_platform
-        self.arch = binaryninja.Architecture[AVR.name]
+        self.platform = Architecture[AVR.name].standalone_platform
+        self.arch = Architecture[AVR.name]
 
         self.add_auto_segment(
             0, AVR.chip.ROM_SIZE,
@@ -362,7 +367,7 @@ class AVRBinaryView(binaryninja.BinaryView):
         # All registers.
         for addr, name in AVR.chip.all_registers.items():
             self.define_data_var(RAM_SEGMENT_BEGIN + addr, type_u8)
-            self.define_auto_symbol(binaryninja.types.Symbol(
+            self.define_auto_symbol(Symbol(
                 SymbolType.DataSymbol,
                 RAM_SEGMENT_BEGIN + addr,
                 name
@@ -392,7 +397,7 @@ class AVRBinaryView(binaryninja.BinaryView):
                 try:
                     jmp_target = int(f.llil[0].operands[0])
                 except Exception as e:
-                    binaryninja.log.log_error(
+                    log_error(
                         "Failed to parse jump target at 0x{:X} - incorrect chip? ({})"
                         .format(isr_addr, e)
                     )
