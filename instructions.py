@@ -1,5 +1,5 @@
-import abc
-import collections
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 import struct
 
 from . import operand
@@ -22,19 +22,7 @@ except Exception:
         print("[{}]: {}".format(level, text))
 
 
-# Hack to have abstract static methods with abc
-class abstractstatic(staticmethod):
-    __slots__ = ()
-
-    def __init__(self, function):
-        super(abstractstatic, self).__init__(function)
-        function.__isabstractmethod__ = True
-    __isabstractmethod__ = True
-
-
-class Instruction(object):
-    __metaclass__ = abc.ABCMeta
-
+class Instruction(metaclass=ABCMeta):
     # The order in which the operands have in the instruction. Will only be honored
     # as long as args_to_operand is not overwritten
     register_order = []
@@ -62,7 +50,8 @@ class Instruction(object):
         except Exception:
             return cls.__name__
 
-    @abstractstatic
+    @staticmethod
+    @abstractmethod
     def instruction_signature():
         """
         From the manual, e.g. '0010 00rd dddd rrrr'.
@@ -122,7 +111,7 @@ class Instruction(object):
         # Pattern match
         pattern = cls.instruction_signature()
 
-        pattern_matches = collections.defaultdict(lambda: [])
+        pattern_matches = defaultdict(lambda: [])
 
         for i in range(len(pattern)):
             instr_i = len(pattern) - i - 1
@@ -492,7 +481,7 @@ class Instruction_BR_Abstract(Instruction):
             operand.OperandRelativeAddress(chip, k * 2 + 2)
         ]
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_llil_condition(self, il):
         pass
 
@@ -2997,7 +2986,7 @@ class Instruction_SkipInstruction_Abstract(Instruction):
     instruction big. otherwise we're screwed. I don't know how we could solve
     this at this moment. TODO.
     """
-    @abc.abstractmethod
+    @abstractmethod
     def _get_llil_condition(self, il):
         pass
 
@@ -4464,8 +4453,8 @@ ALL_INSTRUCTIONS = [
     Instruction_XCH,
 ]
 
-INSTRUCTIONS_BY_PREFIX = collections.defaultdict(
-    lambda: collections.defaultdict(
+INSTRUCTIONS_BY_PREFIX = defaultdict(
+    lambda: defaultdict(
         lambda: list()
     )
 )

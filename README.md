@@ -7,7 +7,7 @@ should be implemented, lifting is mostly implemented.
 
 ## Installation
 Run this command in your BN plugins folder:
-`git clone https://github.com/fluxchief/binaryninja_avr.git`
+`git clone https://github.com/m1stadev/binaryninja_avr.git`
 
 Another option is to download this repository as a ZIP file and
 extract it in your BN plugins folder.
@@ -20,6 +20,7 @@ extract it in your BN plugins folder.
  - ATTiny48
  - ATTiny88
  - ATXMega128A4u
+ - AT90CAN64
 
 support and can be easily extended.
 

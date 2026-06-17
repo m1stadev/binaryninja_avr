@@ -1,25 +1,24 @@
-import abc
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 RAM_SEGMENT_BEGIN = 0x100000
 
 
-class Operand(object):
-    __metaclass__ = abc.ABCMeta
+class Operand(metaclass=ABCMeta):
 
     def __init__(self, chip, value):
         self._value = value
         self._chip = chip
 
     # I don't know if we need both functions. We will see later. TODO.
-    @abc.abstractproperty
+    @abstractproperty
     def immediate_value(self):
         pass
 
-    @abc.abstractproperty
+    @abstractproperty
     def symbolic_value(self):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def llil_read(self, il):
         pass
 
