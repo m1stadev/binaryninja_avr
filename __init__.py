@@ -293,12 +293,14 @@ class AVR(Architecture):
         return
     """
 
-
-class DefaultCallingConvention(CallingConvention):
-    name = 'default'
+# https://gcc.gnu.org/wiki/avr-gcc#Calling_Convention
+class GCCCallingConvention(CallingConvention):
+    name = 'gcc'
+    caller_saved_regs = ['r0', 'r18', 'r19', 'r20', 'r21', 'r22', 'r23', 'r24', 'r25', 'r26', 'r27', 'r30', 'r31']
+    callee_saved_regs = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16', 'r17']
     int_arg_regs = ['r22', 'r23', 'r24', 'r25']
-    int_return_reg = 'r30'
-    high_int_return_reg = 'r31'
+    int_return_reg = 'r24'
+    high_int_return_reg = 'r25'
 
 
 class AVRBinaryView(BinaryView):
@@ -456,7 +458,7 @@ class AVRBinaryView(BinaryView):
 
 AVR.register()
 arch = Architecture[AVR.name]
-arch.register_calling_convention(DefaultCallingConvention(arch, 'default'))
+arch.register_calling_convention(GCCCallingConvention(arch, 'default'))
 
 arch.standalone_platform.default_calling_convention = arch.calling_conventions['default']
 AVRBinaryView.register()
