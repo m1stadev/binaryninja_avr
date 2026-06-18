@@ -1,4 +1,4 @@
-from . import Chip
+from .chip import Chip
 
 
 class IOCAN64(Chip):

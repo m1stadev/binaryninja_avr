@@ -1,4 +1,4 @@
-from . import Chip
+from .chip import Chip
 
 
 class IOX128A4U(Chip):

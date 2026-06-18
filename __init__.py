@@ -9,7 +9,7 @@ from .instructions import RAM_SEGMENT_BEGIN
 
 
 
-from .chips import ALL_CHIPS
+from .chip import ALL_CHIPS
 
 
 from binaryninja import (

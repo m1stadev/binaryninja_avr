@@ -1,14 +1,14 @@
-from . import Chip
+from .chip import Chip
 
 
-class IOTn48(Chip):
+class IOTn88(Chip):
     """
-    ATTiny48
+    ATTiny88
     """
 
-    CHIP_ALIASES = ["iotn48", "ATtiny48"]
-    RAM_SIZE = 256
-    ROM_SIZE = 4 * 1024
+    CHIP_ALIASES = ["iotn88", "ATtiny88"]
+    RAM_SIZE = 256 * 2
+    ROM_SIZE = 4 * 1024 * 2
     INTERRUPT_VECTOR_SIZE = 2
 
     IO_REGISTERS = {
@@ -128,10 +128,9 @@ class IOTn48(Chip):
         0xBE: 'TWIHSR',
         0xBE: 'TWHSR',
     }
-
     @staticmethod
     def description():
-        return "ATtiny48"
+        return "ATtiny88"
 
     @staticmethod
     def identifier():
